@@ -15,22 +15,23 @@ template <- readLines("template.R")
 
 # ------------------------------------------------------------------------------
 
-num_sim <- 5
+num_sim <- 2
 
 set.seed(1)
 
 combinations <- 
   crossing(
     sparse_data = c(TRUE, FALSE),
-    model = c("xgboost"),
+    model = c("xgboost", "glmnet", "ranger", "LiblineaR"),
     seed = seq_len(num_sim),
-    n_numeric = c(10, 20, 30, 40, 50),
-    n_counts = c(16, 32, 64, 128, 256),
-    n_rows = c(1000, 2000, 4000, 8000, 16000)
+    n_numeric = c(1, 10, 20, 30, 40, 50, 60, 70),
+    n_counts = c(8, 16, 32, 64, 128, 256, 512, 1024),
+    n_rows = c(100, 500, 1000, 2000, 4000, 8000, 16000, 32000, 64000)
   ) |>
   mutate(
     file = glue("files/{sparse_data}_{model}_{seed}_{n_numeric}_{n_counts}_{n_rows}.R")
-  )
+  ) |>
+  slice_sample(prop = 1)
 
 new_file <- function(x, template) {
   template <- gsub("SPARSE_DATA", x$sparse_data, template)

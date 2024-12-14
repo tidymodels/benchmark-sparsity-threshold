@@ -74,6 +74,12 @@ Type 'q()' to quit R.
 > rec_spec <- recipe(outcome ~ ., data = data)
 > if (model == "xgboost") {
 +   mod_spec <- boost_tree(mode = "regression", engine = "xgboost")
++ } else if (model == "glmnet") {
++   mod_spec <- linear_reg(mode = "regression", engine = "glmnet", penalty = 0)
++ } else if (model == "ranger") {
++   mod_spec <- rand_forest(mode = "regression", engine = "ranger")
++ } else if (model == "LiblineaR") {
++   mod_spec <- svm_linear(mode = "regression", engine = "LiblineaR")
 + }
 > wf_spec <- workflow(rec_spec, mod_spec)
 > 
@@ -103,7 +109,7 @@ Type 'q()' to quit R.
  collate  en_US.UTF-8
  ctype    en_US.UTF-8
  tz       America/Los_Angeles
- date     2024-12-05
+ date     2024-12-14
  pandoc   2.17.1.1 @ /opt/homebrew/bin/pandoc
 
 ─ Packages ───────────────────────────────────────────────────────────────────
@@ -205,4 +211,4 @@ Type 'q()' to quit R.
 > 
 > proc.time()
    user  system elapsed 
-  1.568   0.170   1.791 
+  1.499   0.147   1.708 
