@@ -1,0 +1,214 @@
+
+R version 4.4.2 (2024-10-31) -- "Pile of Leaves"
+Copyright (C) 2024 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin20
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> sparse_data <- FALSE
+> model <- "xgboost"
+> seed <- 1
+> n_numeric <- 60
+> n_counts <- 8
+> n_rows <- 16000
+> file_name <- glue::glue("{sparse_data}_{model}_{seed}_{n_numeric}_{n_counts}_{n_rows}.RData")
+> 
+> ## Packages --------------------------------------------------------------------
+> 
+> suppressPackageStartupMessages({
++ library(tidymodels)
++ })
+> 
+> ## Simulate data ---------------------------------------------------------------
+> 
+> create_dummy <- function(n) {
++   n_non_zero <- rpois(1, n / 1000) + 1
++   positions <- sort(sample(n, n_non_zero))
++   values <- rep(1, n_non_zero)
++ 
++   sparsevctrs::sparse_integer(values, positions, length = n)
++ }
+> 
+> create_data <- function(n_rows, n_dense, n_sparse) {
++   outcome <- rnorm(n_rows)
++ 
++   dense_columns <- map(seq_len(n_dense), ~rnorm(n = n_rows))
++   names(dense_columns) <- paste0("d", seq_len(n_dense))
++ 
++   sparse_columns <- map(seq_len(n_sparse), ~create_dummy(n = n_rows))
++   names(sparse_columns) <- paste0("s", seq_len(n_sparse))
++ 
++ 
++   bind_cols(outcome = outcome, dense_columns, sparse_columns)
++ }
+> 
+> materialize_data <- function(data) {
++   for (i in seq_along(data)) {
++     data[[i]] <- data[[i]][]
++   }
++   data
++ }
+> 
+> set.seed(seed)
+> 
+> data <- create_data(n_rows, n_numeric, n_counts)
+> 
+> if (!sparse_data) {
++   data <- materialize_data(data)
++ }
+> 
+> ## Specify model ---------------------------------------------------------------
+> 
+> rec_spec <- recipe(outcome ~ ., data = data)
+> if (model == "xgboost") {
++   mod_spec <- boost_tree(mode = "regression", engine = "xgboost")
++ } else if (model == "glmnet") {
++   mod_spec <- linear_reg(mode = "regression", engine = "glmnet", penalty = 0)
++ } else if (model == "ranger") {
++   mod_spec <- rand_forest(mode = "regression", engine = "ranger")
++ } else if (model == "LiblineaR") {
++   mod_spec <- svm_linear(mode = "regression", engine = "LiblineaR")
++ }
+> wf_spec <- workflow(rec_spec, mod_spec)
+> 
+> ## model fit -------------------------------------------------------------------
+> 
+> mem_alloc <- bench::bench_memory(
++   time <- system.time(
++     wf_fit <- fit(wf_spec, data)
++   )
++ )
+> 
+> ## Model performance -----------------------------------------------------------
+> 
+> preds <- predict(wf_fit, data)
+> rmse_value <- rmse_vec(preds$.pred, data$outcome)
+> 
+> ## Session info ----------------------------------------------------------------
+> 
+> sessioninfo::session_info()
+─ Session info ───────────────────────────────────────────────────────────────
+ setting  value
+ version  R version 4.4.2 (2024-10-31)
+ os       macOS Sequoia 15.1.1
+ system   aarch64, darwin20
+ ui       X11
+ language (EN)
+ collate  en_US.UTF-8
+ ctype    en_US.UTF-8
+ tz       America/Los_Angeles
+ date     2024-12-12
+ pandoc   2.17.1.1 @ /opt/homebrew/bin/pandoc
+
+─ Packages ───────────────────────────────────────────────────────────────────
+ package      * version    date (UTC) lib source
+ backports      1.5.0      2024-05-23 [1] CRAN (R 4.4.0)
+ bench          1.1.3      2023-05-04 [1] CRAN (R 4.4.0)
+ broom        * 1.0.6      2024-05-17 [1] CRAN (R 4.4.0)
+ class          7.3-22     2023-05-03 [1] CRAN (R 4.4.2)
+ cli            3.6.3      2024-06-21 [1] CRAN (R 4.4.0)
+ codetools      0.2-20     2024-03-31 [1] CRAN (R 4.4.2)
+ colorspace     2.1-1      2024-07-26 [1] CRAN (R 4.4.0)
+ data.table     1.16.2     2024-10-10 [1] CRAN (R 4.4.1)
+ dials        * 1.3.0.9000 2024-11-14 [1] Github (tidymodels/dials@ed4ecef)
+ DiceDesign     1.10       2023-12-07 [1] CRAN (R 4.4.0)
+ digest         0.6.37     2024-08-19 [1] CRAN (R 4.4.1)
+ dplyr        * 1.1.4      2023-11-17 [1] CRAN (R 4.4.0)
+ fansi          1.0.6      2023-12-08 [1] CRAN (R 4.4.0)
+ foreach        1.5.2      2022-02-02 [1] CRAN (R 4.4.0)
+ furrr          0.3.1      2022-08-15 [1] CRAN (R 4.4.0)
+ future         1.34.0     2024-07-29 [1] CRAN (R 4.4.0)
+ future.apply   1.11.3     2024-10-27 [1] CRAN (R 4.4.1)
+ generics       0.1.3      2022-07-05 [1] CRAN (R 4.4.0)
+ ggplot2      * 3.5.1      2024-04-23 [1] CRAN (R 4.4.0)
+ globals        0.16.3     2024-03-08 [1] CRAN (R 4.4.0)
+ glue           1.8.0      2024-09-30 [1] CRAN (R 4.4.1)
+ gower          1.0.1      2022-12-22 [1] CRAN (R 4.4.0)
+ GPfit          1.0-8      2019-02-08 [1] CRAN (R 4.4.0)
+ gtable         0.3.6      2024-10-25 [1] CRAN (R 4.4.1)
+ hardhat        1.4.0.9002 2024-11-14 [1] Github (tidymodels/hardhat@aa7204b)
+ infer        * 1.0.7      2024-03-25 [1] CRAN (R 4.4.0)
+ ipred          0.9-15     2024-07-18 [1] CRAN (R 4.4.0)
+ iterators      1.0.14     2022-02-05 [1] CRAN (R 4.4.0)
+ jsonlite       1.8.9      2024-09-20 [1] CRAN (R 4.4.1)
+ lattice        0.22-6     2024-03-20 [1] CRAN (R 4.4.2)
+ lava           1.8.0      2024-03-05 [1] CRAN (R 4.4.0)
+ lhs            1.2.0      2024-06-30 [1] CRAN (R 4.4.0)
+ lifecycle      1.0.4      2023-11-07 [1] CRAN (R 4.4.0)
+ listenv        0.9.1      2024-01-29 [1] CRAN (R 4.4.0)
+ lubridate      1.9.3      2023-09-27 [1] CRAN (R 4.4.0)
+ magrittr       2.0.3      2022-03-30 [1] CRAN (R 4.4.0)
+ MASS           7.3-61     2024-06-13 [1] CRAN (R 4.4.2)
+ Matrix         1.7-1      2024-10-18 [1] CRAN (R 4.4.2)
+ modeldata    * 1.4.0      2024-06-19 [1] CRAN (R 4.4.0)
+ munsell        0.5.1      2024-04-01 [1] CRAN (R 4.4.0)
+ nnet           7.3-19     2023-05-03 [1] CRAN (R 4.4.2)
+ parallelly     1.39.0     2024-11-07 [1] CRAN (R 4.4.1)
+ parsnip      * 1.2.1.9003 2024-11-14 [1] Github (tidymodels/parsnip@a212f78)
+ pillar         1.9.0      2023-03-22 [1] CRAN (R 4.4.0)
+ pkgconfig      2.0.3      2019-09-22 [1] CRAN (R 4.4.0)
+ prodlim        2024.06.25 2024-06-24 [1] CRAN (R 4.4.0)
+ profmem        0.6.0      2020-12-13 [1] CRAN (R 4.4.0)
+ purrr        * 1.0.2      2023-08-10 [1] CRAN (R 4.4.0)
+ R6             2.5.1      2021-08-19 [1] CRAN (R 4.4.0)
+ Rcpp           1.0.13-1   2024-11-02 [1] CRAN (R 4.4.1)
+ recipes      * 1.1.0.9001 2024-11-25 [1] local
+ rlang          1.1.4      2024-06-04 [1] CRAN (R 4.4.0)
+ rpart          4.1.23     2023-12-05 [1] CRAN (R 4.4.2)
+ rsample      * 1.2.1      2024-03-25 [1] CRAN (R 4.4.0)
+ rstudioapi     0.17.1     2024-10-22 [1] CRAN (R 4.4.1)
+ scales       * 1.3.0      2023-11-28 [1] CRAN (R 4.4.0)
+ sessioninfo    1.2.2      2021-12-06 [1] CRAN (R 4.4.0)
+ sparsevctrs    0.1.0.9002 2024-11-25 [1] Github (r-lib/sparsevctrs@35720dc)
+ survival       3.7-0      2024-06-05 [1] CRAN (R 4.4.2)
+ tibble       * 3.2.1      2023-03-20 [1] CRAN (R 4.4.0)
+ tidymodels   * 1.2.0      2024-03-25 [1] CRAN (R 4.4.0)
+ tidyr        * 1.3.1      2024-01-24 [1] CRAN (R 4.4.0)
+ tidyselect     1.2.1      2024-03-11 [1] CRAN (R 4.4.0)
+ timechange     0.3.0      2024-01-18 [1] CRAN (R 4.4.0)
+ timeDate       4041.110   2024-09-22 [1] CRAN (R 4.4.1)
+ tune         * 1.2.1      2024-04-18 [1] CRAN (R 4.4.0)
+ utf8           1.2.4      2023-10-22 [1] CRAN (R 4.4.0)
+ vctrs          0.6.5.9000 2024-09-17 [1] Github (r-lib/vctrs@8d98911)
+ withr          3.0.2      2024-10-28 [1] CRAN (R 4.4.1)
+ workflows    * 1.1.4.9000 2024-11-14 [1] deps
+ workflowsets * 1.1.0      2024-03-21 [1] CRAN (R 4.4.0)
+ xgboost        1.7.8.1    2024-07-24 [1] CRAN (R 4.4.0)
+ yardstick    * 1.3.1      2024-03-21 [1] CRAN (R 4.4.0)
+
+ [1] /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/library
+
+──────────────────────────────────────────────────────────────────────────────
+> 
+> # Save results -----------------------------------------------------------------
+> 
+> readr::write_rds(
++   list(
++     sparse_data = sparse_data,
++     model = model,
++     n_numeric = n_numeric,
++     n_counts = n_counts,
++     n_rows = n_rows,
++     seed = seed,
++     time = time[["elapsed"]],
++     rmse = rmse_value,
++     mem_alloc = mem_alloc$mem_alloc
++   ),
++   file = file_name
++ )
+> 
+> proc.time()
+   user  system elapsed 
+  2.789   0.148   3.003 

@@ -105,12 +105,40 @@ rmse_tbl |>
 
 ![](readme_files/figure-commonmark/rsme-dense-vs-sparse-1.png)
 
+There ar some runs that doesn’t match performance
+
 ``` r
 rmse_tbl |>
-  count(rmse_diff)
+  summarise(nonzero = sum(rmse_diff != 0) / n())
+```
+
+    # A tibble: 1 × 1
+      nonzero
+        <dbl>
+    1  0.0521
+
+It happens for these models
+
+``` r
+rmse_tbl |>
+  filter(rmse_diff != 0) |>
+  count(model)
 ```
 
     # A tibble: 1 × 2
-      rmse_diff     n
-          <dbl> <int>
-    1         0   625
+      model      n
+      <chr>  <int>
+    1 glmnet   240
+
+It happens for these models
+
+``` r
+rmse_tbl |>
+  filter(rmse_diff != 0) |>
+  ggplot(aes(rmse_diff)) +
+  geom_histogram()
+```
+
+    `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+![](readme_files/figure-commonmark/rmse_diff-nonzero-plot-1.png)

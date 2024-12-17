@@ -93,8 +93,29 @@ rmse_tbl |>
  )
 ```
 
+There ar some runs that doesn't match performance
+
 ```{r}
 #| label: "rmse_diff-count"
 rmse_tbl |>
-  count(rmse_diff)
+  summarise(nonzero = sum(rmse_diff != 0) / n())
+```
+
+It happens for these models
+
+```{r}
+#| label: "rmse_diff-nonzero-counts"
+rmse_tbl |>
+  filter(rmse_diff != 0) |>
+  count(model)
+```
+
+It happens for these models
+
+```{r}
+#| label: "rmse_diff-nonzero-plot"
+rmse_tbl |>
+  filter(rmse_diff != 0) |>
+  ggplot(aes(rmse_diff)) +
+  geom_histogram()
 ```

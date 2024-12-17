@@ -55,6 +55,12 @@ if (!sparse_data) {
 rec_spec <- recipe(outcome ~ ., data = data)
 if (model == "xgboost") {
   mod_spec <- boost_tree(mode = "regression", engine = "xgboost")
+} else if (model == "glmnet") {
+  mod_spec <- linear_reg(mode = "regression", engine = "glmnet", penalty = 0)
+} else if (model == "ranger") {
+  mod_spec <- rand_forest(mode = "regression", engine = "ranger")
+} else if (model == "LiblineaR") {
+  mod_spec <- svm_linear(mode = "regression", engine = "LiblineaR")
 }
 wf_spec <- workflow(rec_spec, mod_spec)
 
