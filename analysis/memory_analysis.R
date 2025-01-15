@@ -17,9 +17,9 @@ eval_data <- read_rds("simulation_results.rds") |>
 
 mem_data <-
   eval_data %>%
-  select(sparsity, n_numeric, n_counts, n_rows, sparse_data, seed, mem_alloc) %>%
+  select(model, sparsity, n_numeric, n_counts, n_rows, sparse_data, seed, mem_alloc) %>%
   pivot_wider(
-    id_cols = c(sparsity, n_numeric, n_counts, n_rows, seed),
+    id_cols = c(model, sparsity, n_numeric, n_counts, n_rows, seed),
     names_from = "sparse_data",
     values_from = "mem_alloc"
   ) %>%
@@ -29,7 +29,7 @@ mem_data <-
   select(-sparse, -dense) %>%
   summarize(
     log_fold = median(log_fold),
-    .by = c(sparsity, n_numeric, n_counts, n_rows)
+    .by = c(model, sparsity, n_numeric, n_counts, n_rows)
   )
 
 # ------------------------------------------------------------------------------
@@ -85,6 +85,8 @@ glmn_spec <-
 
 glmn_rec <-
   recipe(log_fold ~ ., data = mem_tr) %>%
+  step_dummy(all_nominal_predictors()) %>%
+  step_nzv(all_numeric_predictors()) %>%
   step_YeoJohnson(all_predictors()) %>%
   step_normalize(all_predictors())
 
