@@ -29,7 +29,7 @@ mem_data <-
   select(-sparse, -dense) %>%
   summarize(
     log_fold = median(log_fold),
-    .by = c(model, sparsity, n_numeric, n_counts, n_rows)
+    .by = c(model, sparsity, n_rows)
   )
 
 # ------------------------------------------------------------------------------
@@ -152,3 +152,7 @@ augment(mars_fit, mem_te) %>%
 augment(mars_fit, mem_te) %>%
   metrics(log_fold, .pred)
 
+augment(mars_fit, mem_te) |>
+  ggplot(aes(.pred, log_fold)) +
+  geom_point() +
+  facet_wrap(~model)
