@@ -22,7 +22,7 @@ set.seed(1)
 combinations <- 
   crossing(
     sparse_data = c(TRUE, FALSE),
-    model = c("xgboost", "glmnet", "ranger", "LiblineaR"),
+    model = c("xgboost", "glmnet", "ranger", "LiblineaR", "lightgbm"),
     seed = seq_len(num_sim),
     n_numeric = c(1, 10, 20, 30, 40, 50, 60, 70),
     n_counts = c(8, 16, 32, 64, 128, 256, 512, 1024),
