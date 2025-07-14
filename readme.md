@@ -115,7 +115,7 @@ rmse_tbl |>
     # A tibble: 1 × 1
       nonzero
         <dbl>
-    1  0.0521
+    1  0.0417
 
 It happens for these models
 

@@ -61,6 +61,10 @@ if (model == "xgboost") {
   mod_spec <- rand_forest(mode = "regression", engine = "ranger")
 } else if (model == "LiblineaR") {
   mod_spec <- svm_linear(mode = "regression", engine = "LiblineaR")
+} else if (model == "lightgbm") {
+  library(bonsai)
+  library(lightgbm)
+  mod_spec <- boost_tree(mode = "regression", engine = "lightgbm")
 }
 wf_spec <- workflow(rec_spec, mod_spec)
 
